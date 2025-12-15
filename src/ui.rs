@@ -256,10 +256,18 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
-    // Center the help dialog
-    let help_width = 56.min(area.width.saturating_sub(4));
+    // Calculate the canvas area (exclude sidebar unless fullscreen)
+    let canvas_x = if app.fullscreen_mode { 0 } else { SIDEBAR_WIDTH };
+    let canvas_width = if app.fullscreen_mode {
+        area.width
+    } else {
+        area.width.saturating_sub(SIDEBAR_WIDTH)
+    };
+
+    // Center the help dialog within the canvas
+    let help_width = 56.min(canvas_width.saturating_sub(4));
     let help_height = area.height.saturating_sub(4).min(40);
-    let x = (area.width.saturating_sub(help_width)) / 2;
+    let x = canvas_x + (canvas_width.saturating_sub(help_width)) / 2;
     let y = (area.height.saturating_sub(help_height)) / 2;
 
     let help_area = Rect {
