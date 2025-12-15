@@ -1,4 +1,5 @@
 use crate::color::{map_from_lut, ColorLut};
+use crate::settings::ColorMode;
 use crate::simulation::DlaSimulation;
 use ratatui::style::Color;
 
@@ -38,6 +39,9 @@ pub fn render_to_braille(
     canvas_height: u16,
     color_lut: &ColorLut,
     color_by_age: bool,
+    color_mode: ColorMode,
+    highlight_recent: usize,
+    invert_colors: bool,
 ) -> Vec<BrailleCell> {
     let sim_width = simulation.grid_width;
     let sim_height = simulation.grid_height;
@@ -51,15 +55,18 @@ pub fn render_to_braille(
     let scale_y = sim_height as f32 / braille_height as f32;
 
     // Pre-calculate for color mapping
-    let inv_num_particles = 1.0 / simulation.num_particles as f32;
+    let inv_num_particles = 1.0 / simulation.num_particles.max(1) as f32;
+    let max_radius = simulation.max_radius.max(1.0);
+    let particles_stuck = simulation.particles_stuck;
 
     let mut cells = Vec::with_capacity((canvas_width * canvas_height) as usize);
 
     for cy in 0..canvas_height {
         for cx in 0..canvas_width {
             let mut pattern: u8 = 0;
-            let mut total_age: f32 = 0.0;
+            let mut total_value: f32 = 0.0;
             let mut dot_count: usize = 0;
+            let mut is_recent = false;
 
             // Sample the 2x4 dots for this Braille character
             let base_bx = cx as usize * 2;
@@ -73,10 +80,26 @@ pub fn render_to_braille(
                     let sim_x = (braille_x as f32 * scale_x) as usize;
                     let sim_y = (braille_y as f32 * scale_y) as usize;
 
-                    if let Some(age) = simulation.get_cell(sim_x, sim_y) {
+                    if let Some(particle) = simulation.get_particle(sim_x, sim_y) {
                         pattern |= BRAILLE_DOTS[dx][dy];
-                        total_age += age as f32;
                         dot_count += 1;
+
+                        // Check if this is a recent particle
+                        if highlight_recent > 0 && particle.age + highlight_recent >= particles_stuck {
+                            is_recent = true;
+                        }
+
+                        // Calculate value based on color mode
+                        let value = match color_mode {
+                            ColorMode::Age => particle.age as f32 * inv_num_particles,
+                            ColorMode::Distance => particle.distance / max_radius,
+                            ColorMode::Density => particle.neighbor_count as f32 / 8.0,
+                            ColorMode::Direction => {
+                                // Map angle (-PI to PI) to 0-1
+                                (particle.direction + std::f32::consts::PI) / std::f32::consts::TAU
+                            }
+                        };
+                        total_value += value;
                     }
                 }
             }
@@ -85,9 +108,12 @@ pub fn render_to_braille(
             if pattern != 0 {
                 let braille_char = char::from_u32(BRAILLE_BASE + pattern as u32).unwrap_or(' ');
 
-                let color = if color_by_age && dot_count > 0 {
-                    let avg_age = total_age / dot_count as f32;
-                    let t = avg_age * inv_num_particles;
+                let color = if is_recent {
+                    // Highlight recent particles in a contrasting color
+                    Color::Rgb(255, 255, 255)
+                } else if color_by_age && dot_count > 0 {
+                    let avg_value = total_value / dot_count as f32;
+                    let t = if invert_colors { 1.0 - avg_value } else { avg_value };
                     map_from_lut(color_lut, t)
                 } else {
                     Color::White

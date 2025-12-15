@@ -62,7 +62,7 @@ fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(5),  // Status
-            Constraint::Length(9),  // Parameters
+            Constraint::Length(10), // Parameters (added extra line)
             Constraint::Min(10),    // Controls
         ])
         .split(area);
@@ -127,6 +127,8 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled(format!("{}{}: {}", prefix, label, value), style))
     };
 
+    let settings = &app.simulation.settings;
+
     let content = vec![
         make_line(
             "Sticky",
@@ -154,7 +156,11 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Speed,
         ),
         Line::from(Span::styled(
-            format!("  Age Color: {}", if app.color_by_age { "ON" } else { "OFF" }),
+            format!("  Mode: {}", settings.color_mode.name()),
+            Style::default().fg(DIM_TEXT_COLOR),
+        )),
+        Line::from(Span::styled(
+            format!("  Step: {:.1}", settings.walk_step_size),
             Style::default().fg(DIM_TEXT_COLOR),
         )),
     ];
@@ -176,16 +182,18 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         ])
     };
 
+    let settings = &app.simulation.settings;
+
     let mut content = vec![
         make_control("Space", "pause/resume"),
         make_control("R", "reset"),
         make_control("1-0", "seed patterns"),
-        make_control("C", "cycle color"),
-        make_control("A", "toggle age color"),
-        make_control("Tab", "next param"),
-        make_control("↑/↓", "adjust param"),
-        make_control("+/-", "speed"),
-        make_control("V", "fullscreen"),
+        make_control("C", "color scheme"),
+        make_control("M", &format!("mode: {}", settings.color_mode.name())),
+        make_control("N", &format!("nbr: {}", settings.neighborhood.short_name())),
+        make_control("B", &format!("bnd: {}", settings.boundary_behavior.name())),
+        make_control("S", &format!("spn: {}", settings.spawn_mode.name())),
+        make_control("W/E", &format!("step: {:.1}", settings.walk_step_size)),
         make_control("H/?", "help"),
         make_control("Q", "quit"),
     ];
@@ -211,6 +219,9 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
+    // Get settings for rendering
+    let settings = &app.simulation.settings;
+
     // Render Braille pattern (uses LUT for fast color lookup)
     let cells = braille::render_to_braille(
         &app.simulation,
@@ -218,6 +229,9 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
         inner.height,
         &app.color_lut,
         app.color_by_age,
+        settings.color_mode,
+        settings.highlight_recent,
+        settings.invert_colors,
     );
 
     for cell in cells {

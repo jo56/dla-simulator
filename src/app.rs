@@ -174,4 +174,41 @@ impl App {
     pub fn decrease_speed(&mut self) {
         self.steps_per_frame = self.steps_per_frame.saturating_sub(1).max(1);
     }
+
+    // === New settings methods ===
+
+    /// Cycle through color modes
+    pub fn cycle_color_mode(&mut self) {
+        self.simulation.settings.color_mode = self.simulation.settings.color_mode.next();
+    }
+
+    /// Toggle invert colors
+    pub fn toggle_invert_colors(&mut self) {
+        self.simulation.settings.invert_colors = !self.simulation.settings.invert_colors;
+    }
+
+    /// Cycle through neighborhood types
+    pub fn cycle_neighborhood(&mut self) {
+        self.simulation.settings.neighborhood = self.simulation.settings.neighborhood.next();
+    }
+
+    /// Cycle through boundary behaviors
+    pub fn cycle_boundary(&mut self) {
+        self.simulation.settings.boundary_behavior = self.simulation.settings.boundary_behavior.next();
+    }
+
+    /// Cycle through spawn modes
+    pub fn cycle_spawn_mode(&mut self) {
+        self.simulation.settings.spawn_mode = self.simulation.settings.spawn_mode.next();
+    }
+
+    /// Adjust walk step size
+    pub fn adjust_walk_step(&mut self, delta: f32) {
+        self.simulation.settings.adjust_walk_step_size(delta);
+    }
+
+    /// Adjust highlight recent count
+    pub fn adjust_highlight(&mut self, delta: i32) {
+        self.simulation.settings.adjust_highlight_recent(delta);
+    }
 }

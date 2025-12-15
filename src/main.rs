@@ -1,6 +1,8 @@
 mod app;
 mod braille;
 mod color;
+mod presets;
+mod settings;
 mod simulation;
 mod ui;
 
@@ -140,6 +142,16 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('h') | KeyCode::Char('H') | KeyCode::Char('?') => {
                             app.toggle_help()
                         }
+                        // New settings controls
+                        KeyCode::Char('m') | KeyCode::Char('M') => app.cycle_color_mode(),
+                        KeyCode::Char('i') | KeyCode::Char('I') => app.toggle_invert_colors(),
+                        KeyCode::Char('n') | KeyCode::Char('N') => app.cycle_neighborhood(),
+                        KeyCode::Char('b') | KeyCode::Char('B') => app.cycle_boundary(),
+                        KeyCode::Char('s') | KeyCode::Char('S') => app.cycle_spawn_mode(),
+                        KeyCode::Char('w') | KeyCode::Char('W') => app.adjust_walk_step(0.5),
+                        KeyCode::Char('e') | KeyCode::Char('E') => app.adjust_walk_step(-0.5),
+                        KeyCode::Char('[') => app.adjust_highlight(-5),
+                        KeyCode::Char(']') => app.adjust_highlight(5),
                         KeyCode::Tab => app.next_focus(),
                         KeyCode::BackTab => app.prev_focus(),
                         KeyCode::Up => app.adjust_focused_up(),
