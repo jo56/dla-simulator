@@ -10,8 +10,8 @@ use ratatui::{
 
 const SIDEBAR_WIDTH: u16 = 22;
 
-/// Number of lines in the help content (for scroll calculations)
-pub const HELP_CONTENT_LINES: u16 = 71;
+/// Max scroll for help content (generous to account for text wrapping on small screens)
+pub const HELP_CONTENT_LINES: u16 = 120;
 
 // UI color scheme
 const BORDER_COLOR: Color = Color::Cyan;
@@ -374,6 +374,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
 
     let paragraph = Paragraph::new(content)
         .block(block)
+        .wrap(Wrap { trim: true })
         .scroll((app.help_scroll, 0));
 
     frame.render_widget(paragraph, help_area);
