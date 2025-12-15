@@ -316,8 +316,6 @@ pub struct SimulationSettings {
     pub color_mode: ColorMode,
     /// Number of recent particles to highlight (0-50)
     pub highlight_recent: usize,
-    /// Color cycling animation speed (0.0-1.0)
-    pub color_cycle_speed: f32,
     /// Invert color gradient
     pub invert_colors: bool,
 }
@@ -349,7 +347,6 @@ impl Default for SimulationSettings {
             // Visual
             color_mode: ColorMode::default(),
             highlight_recent: 0,
-            color_cycle_speed: 0.0,
             invert_colors: false,
         }
     }
@@ -420,11 +417,6 @@ impl SimulationSettings {
     /// Adjust highlight recent within bounds
     pub fn adjust_highlight_recent(&mut self, delta: i32) {
         self.highlight_recent = (self.highlight_recent as i32 + delta).clamp(0, 50) as usize;
-    }
-
-    /// Adjust color cycle speed within bounds
-    pub fn adjust_color_cycle_speed(&mut self, delta: f32) {
-        self.color_cycle_speed = (self.color_cycle_speed + delta).clamp(0.0, 1.0);
     }
 
     /// Calculate effective stickiness based on neighbor count and distance

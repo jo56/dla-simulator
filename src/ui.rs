@@ -254,8 +254,8 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
 
 fn render_help_overlay(frame: &mut Frame, area: Rect) {
     // Center the help dialog
-    let help_width = 54.min(area.width.saturating_sub(4));
-    let help_height = 26.min(area.height.saturating_sub(4));
+    let help_width = 56.min(area.width.saturating_sub(4));
+    let help_height = 34.min(area.height.saturating_sub(4));
     let x = (area.width.saturating_sub(help_width)) / 2;
     let y = (area.height.saturating_sub(help_height)) / 2;
 
@@ -284,17 +284,22 @@ fn render_help_overlay(frame: &mut Frame, area: Rect) {
         Line::from("until they stick to a growing structure,"),
         Line::from("creating fractal snowflake-like patterns."),
         Line::from(""),
-        Line::from(Span::styled("PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
-        Line::from("  Stickiness: Chance to stick (0.1-1.0)"),
-        Line::from("  Lower = more dendritic branches"),
-        Line::from(""),
         Line::from(Span::styled("SEED PATTERNS:", Style::default().fg(HIGHLIGHT_COLOR))),
         Line::from("  1=Point    2=Line     3=Cross    4=Circle"),
         Line::from("  5=Ring     6=Block    7=Multi    8=Starburst"),
         Line::from("  9=Noise    0=Scatter"),
         Line::from(""),
-        Line::from(Span::styled("Use Tab to select parameter,", Style::default().fg(DIM_TEXT_COLOR))),
-        Line::from(Span::styled("then ↑/↓ to adjust value.", Style::default().fg(DIM_TEXT_COLOR))),
+        Line::from(Span::styled("ADVANCED CONTROLS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from("  M=color mode   I=invert colors"),
+        Line::from("  N=neighborhood (4/8/24 neighbors)"),
+        Line::from("  B=boundary     S=spawn mode"),
+        Line::from("  W/E=walk step  [/]=highlight recent"),
+        Line::from(""),
+        Line::from(Span::styled("BASIC CONTROLS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from("  Space=pause  R=reset  C=colors  V=fullscreen"),
+        Line::from("  Tab/↑↓=adjust parameters  +/-=speed"),
+        Line::from(""),
+        Line::from(Span::styled("Lower stickiness = more dendritic branches", Style::default().fg(DIM_TEXT_COLOR))),
     ];
 
     let paragraph = Paragraph::new(content)
