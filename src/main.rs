@@ -20,7 +20,7 @@ use std::io;
 use std::time::Duration;
 
 #[derive(Parser, Debug)]
-#[command(name = "dla-simulator")]
+#[command(name = "dla-simulation")]
 #[command(about = "Diffusion-Limited Aggregation simulation in the terminal")]
 struct Args {
     // === Basic Parameters ===

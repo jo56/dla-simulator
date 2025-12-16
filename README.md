@@ -1,4 +1,4 @@
-# DLA Simulator
+# DLA Simulation
 
 A terminal-based Diffusion-Limited Aggregation (DLA) simulation using high-resolution Braille character rendering.
 
@@ -28,15 +28,15 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 ### From GitHub (recommended)
 
 ```bash
-cargo install --git https://github.com/jo56/dla-simulator
+cargo install --git https://github.com/jo56/dla-simulation
 ```
 
 ### From source
 
 ```bash
 # Clone the repository
-git clone https://github.com/jo56/dla-simulator.git
-cd dla-simulator
+git clone https://github.com/jo56/dla-simulation.git
+cd dla-simulation
 
 # Build and run
 cargo run --release

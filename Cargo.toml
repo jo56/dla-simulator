@@ -1,5 +1,5 @@
 [package]
-name = "dla-simulator"
+name = "dla-simulation"
 version = "0.0.2"
 edition = "2021"
 description = "Diffusion-Limited Aggregation simulation in the terminal"
