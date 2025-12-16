@@ -253,45 +253,10 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(vec![
             Span::raw(" "),
             Span::styled("V", key_style),
-            Span::styled(" full ", desc_style),
+            Span::styled(" window ", desc_style),
             Span::styled("1-0", key_style),
             Span::styled(" seeds", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("C", key_style),
-            Span::styled(" color ", desc_style),
-            Span::styled("A", key_style),
-            Span::styled(" age", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("M", key_style),
-            Span::styled(" mode ", desc_style),
-            Span::styled("I", key_style),
-            Span::styled(" invert", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("N", key_style),
-            Span::styled(" neigh ", desc_style),
-            Span::styled("B", key_style),
-            Span::styled(" bound", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("S", key_style),
-            Span::styled(" spawn ", desc_style),
-            Span::styled("W/E", key_style),
-            Span::styled(" step", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("+/-", key_style),
-            Span::styled(" spd ", desc_style),
-            Span::styled("[/]", key_style),
-            Span::styled(" hi-lt", desc_style),
-        ]),
+        ])
     ];
 
     let content_height = content.len() as u16;
