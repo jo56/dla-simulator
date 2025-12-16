@@ -14,6 +14,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
+use settings::{BoundaryBehavior, ColorMode, NeighborhoodType, SpawnMode};
 use simulation::SeedPattern;
 use std::io;
 use std::time::Duration;
@@ -22,11 +23,12 @@ use std::time::Duration;
 #[command(name = "dla-simulator")]
 #[command(about = "Diffusion-Limited Aggregation simulation in the terminal")]
 struct Args {
+    // === Basic Parameters ===
     /// Number of particles to simulate (auto-capped to ~20% of grid area)
     #[arg(short = 'p', long, default_value = "5000")]
     particles: usize,
 
-    /// Stickiness factor (0.1-1.0)
+    /// Base stickiness factor (0.1-1.0)
     #[arg(short = 's', long, default_value = "1.0")]
     stickiness: f32,
 
@@ -37,6 +39,122 @@ struct Args {
     /// Simulation speed (steps per frame, 1-50)
     #[arg(long, default_value = "5")]
     speed: usize,
+
+    // === Movement Parameters ===
+    /// Walk step size per random walk iteration (0.5-5.0)
+    #[arg(long = "walk-step", default_value = "2.0")]
+    walk_step: f32,
+
+    /// Walk bias angle in degrees (0-360)
+    #[arg(long = "walk-angle", default_value = "0.0")]
+    walk_angle: f32,
+
+    /// Walk bias strength (0.0-0.5, 0 = isotropic)
+    #[arg(long = "walk-force", default_value = "0.0")]
+    walk_force: f32,
+
+    /// Radial bias (-0.3 to 0.3, negative = outward, positive = inward)
+    #[arg(long = "radial-bias", default_value = "0.0")]
+    radial_bias: f32,
+
+    // === Sticking Parameters ===
+    /// Neighborhood type for sticking checks (vonneumann, moore, extended)
+    #[arg(long, default_value = "moore")]
+    neighborhood: String,
+
+    /// Minimum neighbors required to stick (1-4)
+    #[arg(long = "multi-contact", default_value = "1")]
+    multi_contact: u8,
+
+    /// Stickiness at branch tips (0.1-1.0)
+    #[arg(long = "tip-stickiness", default_value = "1.0")]
+    tip_stickiness: f32,
+
+    /// Stickiness on branch sides (0.1-1.0)
+    #[arg(long = "side-stickiness", default_value = "1.0")]
+    side_stickiness: f32,
+
+    /// Stickiness variation by distance from center (-0.5 to 0.5)
+    #[arg(long = "stickiness-gradient", default_value = "0.0")]
+    stickiness_gradient: f32,
+
+    // === Spawn/Boundary Parameters ===
+    /// Spawn mode (circle, edges, corners, random, top, bottom, left, right)
+    #[arg(long = "spawn-mode", default_value = "circle")]
+    spawn_mode: String,
+
+    /// Boundary behavior (clamp, wrap, bounce, stick, absorb)
+    #[arg(long, default_value = "clamp")]
+    boundary: String,
+
+    /// Buffer distance between structure and spawn circle (5-50)
+    #[arg(long = "spawn-offset", default_value = "10.0")]
+    spawn_offset: f32,
+
+    /// Multiplier for escape/respawn distance (2.0-6.0)
+    #[arg(long = "escape-mult", default_value = "2.0")]
+    escape_mult: f32,
+
+    /// Minimum spawn radius (20-100)
+    #[arg(long = "min-radius", default_value = "50.0")]
+    min_radius: f32,
+
+    /// Maximum walk iterations before respawn (1000-50000)
+    #[arg(long = "max-iterations", default_value = "10000")]
+    max_iterations: usize,
+
+    // === Visual Parameters ===
+    /// Color mode (age, distance, density, direction)
+    #[arg(long = "color-mode", default_value = "age")]
+    color_mode: String,
+
+    /// Number of recent particles to highlight (0-50)
+    #[arg(long, default_value = "0")]
+    highlight: usize,
+
+    /// Invert color gradient
+    #[arg(long, default_value = "false")]
+    invert: bool,
+}
+
+fn parse_neighborhood(s: &str) -> NeighborhoodType {
+    match s.to_lowercase().as_str() {
+        "vonneumann" | "von-neumann" | "vn" | "4" => NeighborhoodType::VonNeumann,
+        "extended" | "ext" | "24" => NeighborhoodType::Extended,
+        _ => NeighborhoodType::Moore,
+    }
+}
+
+fn parse_spawn_mode(s: &str) -> SpawnMode {
+    match s.to_lowercase().as_str() {
+        "edges" | "edge" => SpawnMode::Edges,
+        "corners" | "corner" => SpawnMode::Corners,
+        "random" | "rand" => SpawnMode::Random,
+        "top" => SpawnMode::Top,
+        "bottom" => SpawnMode::Bottom,
+        "left" => SpawnMode::Left,
+        "right" => SpawnMode::Right,
+        _ => SpawnMode::Circle,
+    }
+}
+
+fn parse_boundary(s: &str) -> BoundaryBehavior {
+    match s.to_lowercase().as_str() {
+        "wrap" | "toroidal" => BoundaryBehavior::Wrap,
+        "bounce" | "reflect" => BoundaryBehavior::Bounce,
+        "stick" => BoundaryBehavior::Stick,
+        "absorb" | "respawn" => BoundaryBehavior::Absorb,
+        _ => BoundaryBehavior::Clamp,
+    }
+}
+
+fn parse_color_mode(s: &str) -> ColorMode {
+    match s.to_lowercase().as_str() {
+        "distance" | "dist" => ColorMode::Distance,
+        "density" | "dens" => ColorMode::Density,
+        "direction" | "dir" => ColorMode::Direction,
+        _ => ColorMode::Age,
+    }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -79,6 +197,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     app.simulation.num_particles = args.particles.clamp(100, max_particles);
     app.simulation.stickiness = args.stickiness.clamp(0.1, 1.0);
     app.steps_per_frame = args.speed.clamp(1, 50);
+
+    // Apply movement settings
+    app.simulation.settings.walk_step_size = args.walk_step.clamp(0.5, 5.0);
+    app.simulation.settings.walk_bias_angle = args.walk_angle.clamp(0.0, 360.0);
+    app.simulation.settings.walk_bias_strength = args.walk_force.clamp(0.0, 0.5);
+    app.simulation.settings.radial_bias = args.radial_bias.clamp(-0.3, 0.3);
+
+    // Apply sticking settings
+    app.simulation.settings.neighborhood = parse_neighborhood(&args.neighborhood);
+    app.simulation.settings.multi_contact_min = args.multi_contact.clamp(1, 4);
+    app.simulation.settings.tip_stickiness = args.tip_stickiness.clamp(0.1, 1.0);
+    app.simulation.settings.side_stickiness = args.side_stickiness.clamp(0.1, 1.0);
+    app.simulation.settings.stickiness_gradient = args.stickiness_gradient.clamp(-0.5, 0.5);
+
+    // Apply spawn/boundary settings
+    app.simulation.settings.spawn_mode = parse_spawn_mode(&args.spawn_mode);
+    app.simulation.settings.boundary_behavior = parse_boundary(&args.boundary);
+    app.simulation.settings.spawn_radius_offset = args.spawn_offset.clamp(5.0, 50.0);
+    app.simulation.settings.escape_multiplier = args.escape_mult.clamp(2.0, 6.0);
+    app.simulation.settings.min_spawn_radius = args.min_radius.clamp(20.0, 100.0);
+    app.simulation.settings.max_walk_iterations = args.max_iterations.clamp(1000, 50000);
+
+    // Apply visual settings
+    app.simulation.settings.color_mode = parse_color_mode(&args.color_mode);
+    app.simulation.settings.highlight_recent = args.highlight.clamp(0, 50);
+    app.simulation.settings.invert_colors = args.invert;
+
+    // Reset with seed pattern (must come after settings are applied)
     app.simulation.reset_with_seed(seed_pattern);
 
     // Run the app

@@ -54,12 +54,71 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 
 ### Command Line Options
 
+#### Basic Options
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-p, --particles` | Number of particles (100-10000) | 5000 |
-| `-s, --stickiness` | Adhesion probability (0.1-1.0) | 1.0 |
+| `-s, --stickiness` | Base adhesion probability (0.1-1.0) | 1.0 |
 | `--seed` | Seed pattern (point, line, cross, circle, ring, block, noise, scatter, multipoint, starburst) | point |
 | `--speed` | Steps per frame (1-50) | 5 |
+
+#### Movement Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--walk-step` | Distance per walk iteration (0.5-5.0) | 2.0 |
+| `--walk-angle` | Bias direction in degrees (0-360) | 0.0 |
+| `--walk-force` | Bias strength (0.0-0.5) | 0.0 |
+| `--radial-bias` | Radial drift (-0.3 to 0.3, neg=out, pos=in) | 0.0 |
+
+#### Sticking Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--neighborhood` | Neighbor check type (vonneumann, moore, extended) | moore |
+| `--multi-contact` | Minimum neighbors to stick (1-4) | 1 |
+| `--tip-stickiness` | Stickiness at branch tips (0.1-1.0) | 1.0 |
+| `--side-stickiness` | Stickiness on branch sides (0.1-1.0) | 1.0 |
+| `--stickiness-gradient` | Stickiness change per 100px (-0.5 to 0.5) | 0.0 |
+
+#### Spawn & Boundary Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--spawn-mode` | Spawn location (circle, edges, corners, random, top, bottom, left, right) | circle |
+| `--boundary` | Edge behavior (clamp, wrap, bounce, stick, absorb) | clamp |
+| `--spawn-offset` | Buffer from structure (5-50) | 10.0 |
+| `--escape-mult` | Escape distance multiplier (2.0-6.0) | 2.0 |
+| `--min-radius` | Minimum spawn radius (20-100) | 50.0 |
+| `--max-iterations` | Max walk steps before respawn (1000-50000) | 10000 |
+
+#### Visual Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--color-mode` | Color property (age, distance, density, direction) | age |
+| `--highlight` | Recent particles to highlight (0-50) | 0 |
+| `--invert` | Invert color gradient | false |
+
+### Examples
+
+```bash
+# Classic DLA with higher stickiness at tips (creates bushier growth)
+cargo run --release -- --tip-stickiness 1.0 --side-stickiness 0.3
+
+# Directional growth from top edge
+cargo run --release -- --spawn-mode top --walk-angle 270 --walk-force 0.2
+
+# Dense blob-like growth
+cargo run --release -- --neighborhood extended --multi-contact 2
+
+# Toroidal boundary with random spawning
+cargo run --release -- --boundary wrap --spawn-mode random
+
+# Color by approach direction with inverted gradient
+cargo run --release -- --color-mode direction --invert
+```
 
 ## Controls
 
