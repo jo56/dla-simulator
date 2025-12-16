@@ -698,7 +698,7 @@ fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
         .unwrap_or(10);
 
     let popup_width = (max_name_len as u16 + 6).min(area.width.saturating_sub(4)).max(20);
-    let popup_height = (popup.options.len() as u16 + 2).min(area.height.saturating_sub(4)).max(4);
+    let popup_height = (popup.options.len() as u16 + 2).min(area.height.saturating_sub(4)).max(3);
 
     // Center the popup
     let popup_x = area.x + (area.width.saturating_sub(popup_width)) / 2;
