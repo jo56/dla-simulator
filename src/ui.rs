@@ -233,7 +233,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::ColorScheme,
         ),
         make_line(
-            "dir",
+            "direction",
             format!("{:.0}°", settings.walk_bias_angle),
             app.focus == Focus::Direction,
         ),
@@ -248,7 +248,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Force,
         ),
         make_line(
-            "hi-lt",
+            "highlight",
             format!("{}", settings.highlight_recent),
             app.focus == Focus::Highlight,
         ),
@@ -258,7 +258,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Invert,
         ),
         make_line(
-            "maxwalk",
+            "maxsteps",
             format!("{}", settings.max_walk_iterations),
             app.focus == Focus::MaxIterations,
         ),
@@ -278,7 +278,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::MultiContact,
         ),
         make_line(
-            "neighb",
+            "neighbors",
             settings.neighborhood.short_name().to_lowercase(),
             app.focus == Focus::Neighborhood,
         ),
@@ -416,7 +416,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(vec![
             Span::raw(" "),
             Span::styled("Shift+D:", key_style),
-            Span::styled(" dir", desc_style),
+            Span::styled(" direction", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),
@@ -436,7 +436,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(vec![
             Span::raw(" "),
             Span::styled("Shift+H:", key_style),
-            Span::styled(" hi-lt", desc_style),
+            Span::styled(" highlight", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),
@@ -451,7 +451,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(vec![
             Span::raw(" "),
             Span::styled("Shift+N:", key_style),
-            Span::styled(" neighb", desc_style),
+            Span::styled(" neighbors", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),
