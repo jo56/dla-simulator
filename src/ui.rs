@@ -180,12 +180,12 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Mode,
         ),
         make_line(
-            "neigh",
+            "neighbors",
             settings.neighborhood.short_name().to_lowercase(),
             app.focus == Focus::Neighborhood,
         ),
         make_line(
-            "bound",
+            "boundary",
             settings.boundary_behavior.name().to_lowercase(),
             app.focus == Focus::Boundary,
         ),
@@ -257,6 +257,39 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled(" window ", desc_style),
             Span::styled("1-0", key_style),
             Span::styled(" seeds", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("C", key_style),
+            Span::styled(" colors ", desc_style),
+            Span::styled("A", key_style),
+            Span::styled(" age", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("+/-", key_style),
+            Span::styled(" speed", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("M", key_style),
+            Span::styled(" mode ", desc_style),
+            Span::styled("N", key_style),
+            Span::styled(" neighbor", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("B", key_style),
+            Span::styled(" bound ", desc_style),
+            Span::styled("S", key_style),
+            Span::styled(" spawn", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("W/E", key_style),
+            Span::styled(" step ", desc_style),
+            Span::styled("I", key_style),
+            Span::styled(" invert", desc_style),
         ]),
     ];
 

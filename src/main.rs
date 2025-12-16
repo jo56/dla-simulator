@@ -170,7 +170,8 @@ fn run_app<B: ratatui::backend::Backend>(
                                     app.adjust_focused_down();
                                 } else {
                                     // When None or Controls, scroll controls box
-                                    app.scroll_controls_down(ui::CONTROLS_CONTENT_LINES);
+                                    // max_scroll = content_lines - visible_lines (3)
+                                    app.scroll_controls_down(ui::CONTROLS_CONTENT_LINES.saturating_sub(3));
                                 }
                             }
                         }
