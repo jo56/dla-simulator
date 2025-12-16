@@ -733,6 +733,15 @@ fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
         })
         .collect();
 
+    // Calculate scroll to keep selection visible
+    let visible_height = popup_height.saturating_sub(2); // minus borders
+    let selected = popup.selected_idx as u16;
+    let scroll = if visible_height == 0 || selected < visible_height {
+        0
+    } else {
+        selected.saturating_sub(visible_height - 1)
+    };
+
     let title = " Lookup (Enter/Esc) ";
     let block = Block::default()
         .borders(Borders::ALL)
@@ -742,7 +751,8 @@ fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
 
     let paragraph = Paragraph::new(content)
         .block(block)
-        .alignment(Alignment::Left);
+        .alignment(Alignment::Left)
+        .scroll((scroll, 0));
 
     frame.render_widget(paragraph, popup_area);
 }
