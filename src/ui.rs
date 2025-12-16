@@ -254,7 +254,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(vec![
             Span::raw(" "),
             Span::styled("V", key_style),
-            Span::styled(" window ", desc_style),
+            Span::styled(" view ", desc_style),
             Span::styled("1-0", key_style),
             Span::styled(" seeds", desc_style),
         ]),

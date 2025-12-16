@@ -136,22 +136,52 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('8') => app.set_seed_pattern(SeedPattern::Starburst),
                         KeyCode::Char('9') => app.set_seed_pattern(SeedPattern::NoisePatch),
                         KeyCode::Char('0') => app.set_seed_pattern(SeedPattern::Scatter),
-                        KeyCode::Char('c') | KeyCode::Char('C') => app.cycle_color_scheme(),
+                        KeyCode::Char('c') | KeyCode::Char('C') => {
+                            app.cycle_color_scheme();
+                            app.focus = Focus::ColorScheme;
+                        }
                         KeyCode::Char('a') | KeyCode::Char('A') => app.toggle_color_by_age(),
                         KeyCode::Char('v') | KeyCode::Char('V') => app.toggle_fullscreen(),
                         KeyCode::Char('h') | KeyCode::Char('H') | KeyCode::Char('?') => {
                             app.toggle_help()
                         }
-                        // New settings controls
-                        KeyCode::Char('m') | KeyCode::Char('M') => app.cycle_color_mode(),
-                        KeyCode::Char('i') | KeyCode::Char('I') => app.toggle_invert_colors(),
-                        KeyCode::Char('n') | KeyCode::Char('N') => app.cycle_neighborhood(),
-                        KeyCode::Char('b') | KeyCode::Char('B') => app.cycle_boundary(),
-                        KeyCode::Char('s') | KeyCode::Char('S') => app.cycle_spawn_mode(),
-                        KeyCode::Char('w') | KeyCode::Char('W') => app.adjust_walk_step(0.5),
-                        KeyCode::Char('e') | KeyCode::Char('E') => app.adjust_walk_step(-0.5),
-                        KeyCode::Char('[') => app.adjust_highlight(-5),
-                        KeyCode::Char(']') => app.adjust_highlight(5),
+                        // New settings controls - also set focus to the relevant parameter
+                        KeyCode::Char('m') | KeyCode::Char('M') => {
+                            app.cycle_color_mode();
+                            app.focus = Focus::Mode;
+                        }
+                        KeyCode::Char('i') | KeyCode::Char('I') => {
+                            app.toggle_invert_colors();
+                            app.focus = Focus::Invert;
+                        }
+                        KeyCode::Char('n') | KeyCode::Char('N') => {
+                            app.cycle_neighborhood();
+                            app.focus = Focus::Neighborhood;
+                        }
+                        KeyCode::Char('b') | KeyCode::Char('B') => {
+                            app.cycle_boundary();
+                            app.focus = Focus::Boundary;
+                        }
+                        KeyCode::Char('s') | KeyCode::Char('S') => {
+                            app.cycle_spawn_mode();
+                            app.focus = Focus::Spawn;
+                        }
+                        KeyCode::Char('w') | KeyCode::Char('W') => {
+                            app.adjust_walk_step(0.5);
+                            app.focus = Focus::WalkStep;
+                        }
+                        KeyCode::Char('e') | KeyCode::Char('E') => {
+                            app.adjust_walk_step(-0.5);
+                            app.focus = Focus::WalkStep;
+                        }
+                        KeyCode::Char('[') => {
+                            app.adjust_highlight(-5);
+                            app.focus = Focus::Highlight;
+                        }
+                        KeyCode::Char(']') => {
+                            app.adjust_highlight(5);
+                            app.focus = Focus::Highlight;
+                        }
                         KeyCode::Tab => app.next_focus(),
                         KeyCode::BackTab => app.prev_focus(),
                         KeyCode::Up => {
@@ -175,8 +205,14 @@ fn run_app<B: ratatui::backend::Backend>(
                                 }
                             }
                         }
-                        KeyCode::Char('+') | KeyCode::Char('=') => app.increase_speed(),
-                        KeyCode::Char('-') | KeyCode::Char('_') => app.decrease_speed(),
+                        KeyCode::Char('+') | KeyCode::Char('=') => {
+                            app.increase_speed();
+                            app.focus = Focus::Speed;
+                        }
+                        KeyCode::Char('-') | KeyCode::Char('_') => {
+                            app.decrease_speed();
+                            app.focus = Focus::Speed;
+                        }
                         KeyCode::Esc => {
                             if app.show_help {
                                 app.toggle_help();
