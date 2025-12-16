@@ -77,9 +77,35 @@ impl Focus {
         }
     }
 
-    /// Shift+Tab exits to Controls mode
-    pub fn deselect(&self) -> Focus {
-        Focus::Controls
+    /// Shift+Tab cycles through parameters in reverse alphabetical order
+    pub fn prev(&self) -> Focus {
+        match self {
+            Focus::None | Focus::Controls => Focus::WalkStep,
+            Focus::Age => Focus::WalkStep, // Loop back
+            Focus::Boundary => Focus::Age,
+            Focus::ColorScheme => Focus::Boundary,
+            Focus::Direction => Focus::ColorScheme,
+            Focus::EscapeMult => Focus::Direction,
+            Focus::Force => Focus::EscapeMult,
+            Focus::Highlight => Focus::Force,
+            Focus::Invert => Focus::Highlight,
+            Focus::MaxIterations => Focus::Invert,
+            Focus::MinRadius => Focus::MaxIterations,
+            Focus::Mode => Focus::MinRadius,
+            Focus::MultiContact => Focus::Mode,
+            Focus::Neighborhood => Focus::MultiContact,
+            Focus::Particles => Focus::Neighborhood,
+            Focus::RadialBias => Focus::Particles,
+            Focus::Seed => Focus::RadialBias,
+            Focus::SideSticky => Focus::Seed,
+            Focus::Spawn => Focus::SideSticky,
+            Focus::SpawnOffset => Focus::Spawn,
+            Focus::Speed => Focus::SpawnOffset,
+            Focus::Stickiness => Focus::Speed,
+            Focus::StickyGradient => Focus::Stickiness,
+            Focus::TipSticky => Focus::StickyGradient,
+            Focus::WalkStep => Focus::TipSticky,
+        }
     }
 
     /// Get the line index in the parameters box for this focus (alphabetical order)
@@ -251,9 +277,9 @@ impl App {
         self.focus = self.focus.next();
     }
 
-    /// Exit to Controls mode (Shift+Tab)
+    /// Navigate to previous parameter (Shift+Tab)
     pub fn prev_focus(&mut self) {
-        self.focus = self.focus.deselect();
+        self.focus = self.focus.prev();
     }
 
     /// Toggle pause state

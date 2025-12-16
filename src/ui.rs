@@ -13,8 +13,8 @@ const SIDEBAR_WIDTH: u16 = 22;
 /// Max scroll for help content (generous to account for text wrapping on small screens)
 pub const HELP_CONTENT_LINES: u16 = 60;
 
-/// Number of lines in controls content (4 main + 17 Shift+letter hints)
-pub const CONTROLS_CONTENT_LINES: u16 = 21;
+/// Number of lines in controls content (4 main + 18 Shift+letter hints)
+pub const CONTROLS_CONTENT_LINES: u16 = 22;
 
 /// Number of lines in parameters content
 pub const PARAMS_CONTENT_LINES: u16 = 24;
@@ -392,6 +392,11 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled("Shift+?:", key_style),
             Span::styled(" lookup", desc_style),
         ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+Tab:", key_style),
+            Span::styled(" prev", desc_style),
+        ]),
         // Shift+letter hints (alphabetical)
         Line::from(vec![
             Span::raw(" "),
@@ -619,8 +624,8 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("Tab/Arrows - Navigate", Style::default().fg(TEXT_COLOR))),
         Line::from("Move between parameters and adjust values"),
         Line::from(""),
-        Line::from(Span::styled("Shift+Tab - Exit Settings", Style::default().fg(TEXT_COLOR))),
-        Line::from("Return focus to main controls"),
+        Line::from(Span::styled("Shift+Tab - Previous Parameter", Style::default().fg(TEXT_COLOR))),
+        Line::from("Navigate parameters in reverse order"),
         Line::from(""),
         Line::from(Span::styled("+/- - Speed", Style::default().fg(TEXT_COLOR))),
         Line::from("Increase or decrease simulation speed"),
