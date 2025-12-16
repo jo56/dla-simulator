@@ -13,6 +13,9 @@ const SIDEBAR_WIDTH: u16 = 22;
 /// Max scroll for help content (generous to account for text wrapping on small screens)
 pub const HELP_CONTENT_LINES: u16 = 60;
 
+/// Number of lines in controls content
+pub const CONTROLS_CONTENT_LINES: u16 = 15;
+
 // UI color scheme
 const BORDER_COLOR: Color = Color::Cyan;
 const HIGHLIGHT_COLOR: Color = Color::Yellow;
@@ -168,51 +171,75 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
         )),
     ];
 
-    let paragraph = Paragraph::new(content).block(block);
+    // Calculate scroll to keep focused item visible based on actual area
+    let focus_line = app.focus.line_index();
+    let visible_height = area.height.saturating_sub(2); // minus borders
+    let content_height = content.len() as u16;
+
+    let scroll = if visible_height == 0 || visible_height >= content_height {
+        0 // No scrolling needed
+    } else if focus_line >= visible_height {
+        // Scroll to show focused line at bottom of visible area
+        focus_line.saturating_sub(visible_height - 1)
+    } else {
+        0 // Focus is within first visible lines
+    };
+
+    let paragraph = Paragraph::new(content)
+        .block(block)
+        .scroll((scroll, 0));
     frame.render_widget(paragraph, area);
 }
 
 fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
-    let block = styled_block(" Controls ");
-
     let key_style = Style::default().fg(HIGHLIGHT_COLOR);
     let desc_style = Style::default().fg(DIM_TEXT_COLOR);
 
-    let make_control = |key: &str, desc: &str| {
+    let settings = &app.simulation.settings;
+
+    // Helper to create a control line
+    let make_control = |key: &str, desc: String| -> Line<'_> {
         Line::from(vec![
-            Span::styled(format!("{:>6}", key), key_style),
+            Span::styled(format!("{:>5}", key), key_style),
             Span::styled(format!(" {}", desc), desc_style),
         ])
     };
 
-    let settings = &app.simulation.settings;
-
-    let mut content = vec![
-        make_control("Space", "pause/resume"),
-        make_control("H/?", "help"),
-        make_control("R", "reset"),
-        make_control("1-0", "seed patterns"),
-        make_control("C", "color scheme"),
-        make_control("M", &format!("mode: {}", settings.color_mode.name())),
-        make_control("N", &format!("nbr: {}", settings.neighborhood.short_name())),
-        make_control("B", &format!("bnd: {}", settings.boundary_behavior.name())),
-        make_control("S", &format!("spn: {}", settings.spawn_mode.name())),
-        make_control("W/E", &format!("step: {:.1}", settings.walk_step_size)),
-        make_control("Q", "quit"),
+    let content = vec![
+        make_control("Space", "pause/resume".to_string()),
+        make_control("H/?", "help".to_string()),
+        make_control("R", "reset".to_string()),
+        make_control("1-0", "seed patterns".to_string()),
+        make_control("C", "color scheme".to_string()),
+        make_control("A", "color-by-age".to_string()),
+        make_control("V", "fullscreen".to_string()),
+        make_control("M", format!("mode: {}", settings.color_mode.name())),
+        make_control("N", format!("{}", settings.neighborhood.short_name())),
+        make_control("B", format!("{}", settings.boundary_behavior.name())),
+        make_control("S", format!("{}", settings.spawn_mode.name())),
+        make_control("W/E", format!("step: {:.1}", settings.walk_step_size)),
+        make_control("[/]", "highlight recent".to_string()),
+        make_control("I", "invert colors".to_string()),
+        make_control("+/-", "speed".to_string()),
+        make_control("Q", "quit".to_string()),
     ];
 
-    // Show current focus hint
-    if app.focus != Focus::None {
-        content.push(Line::from(""));
-        content.push(Line::from(Span::styled(
-            format!("Editing: {:?}", app.focus),
-            Style::default().fg(HIGHLIGHT_COLOR),
-        )));
-    }
+    let content_height = content.len() as u16;
+    let visible_height = area.height.saturating_sub(2); // minus borders
+    let max_scroll = content_height.saturating_sub(visible_height);
+    let is_scrollable = max_scroll > 0;
+
+    let title = if is_scrollable {
+        " Controls (↑↓) "
+    } else {
+        " Controls "
+    };
+
+    let block = styled_block(title);
 
     let paragraph = Paragraph::new(content)
         .block(block)
-        .wrap(Wrap { trim: true });
+        .scroll((app.controls_scroll, 0));
     frame.render_widget(paragraph, area);
 }
 
@@ -325,7 +352,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
 
     // Update title to show scroll hint if scrollable
     let title = if is_scrollable {
-        " Help (↑↓ scroll, H to close) "
+        " Help (J/K scroll, H to close) "
     } else {
         " Help (H to close) "
     };

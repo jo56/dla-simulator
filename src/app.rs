@@ -36,6 +36,18 @@ impl Focus {
             Focus::Speed => Focus::ColorScheme,
         }
     }
+
+    /// Get the line index in the parameters box for this focus
+    pub fn line_index(&self) -> u16 {
+        match self {
+            Focus::None => 0,
+            Focus::Stickiness => 0,
+            Focus::Particles => 1,
+            Focus::Seed => 2,
+            Focus::ColorScheme => 3,
+            Focus::Speed => 4,
+        }
+    }
 }
 
 /// Main application state
@@ -49,6 +61,7 @@ pub struct App {
     pub steps_per_frame: usize,
     pub show_help: bool,
     pub help_scroll: u16,
+    pub controls_scroll: u16,
 }
 
 impl App {
@@ -65,6 +78,7 @@ impl App {
             steps_per_frame: 5,
             show_help: false,
             help_scroll: 0,
+            controls_scroll: 0,
         }
     }
 
@@ -172,6 +186,16 @@ impl App {
     /// Scroll help content down
     pub fn scroll_help_down(&mut self, max_scroll: u16) {
         self.help_scroll = (self.help_scroll + 1).min(max_scroll);
+    }
+
+    /// Scroll controls box up
+    pub fn scroll_controls_up(&mut self) {
+        self.controls_scroll = self.controls_scroll.saturating_sub(1);
+    }
+
+    /// Scroll controls box down
+    pub fn scroll_controls_down(&mut self, max_scroll: u16) {
+        self.controls_scroll = (self.controls_scroll + 1).min(max_scroll);
     }
 
     /// Resize simulation to match new canvas size
