@@ -64,24 +64,25 @@ pub fn get_canvas_size(frame_area: Rect, fullscreen: bool) -> (u16, u16) {
 }
 
 fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
-    // Calculate remaining height after status box
-    let remaining = area.height.saturating_sub(5);
-    // Split remaining space: 50/50 between params and controls
-    let params_height = (remaining / 2).max(4);
-    let controls_height = remaining.saturating_sub(params_height).max(5);
+    // Fixed heights: status=5, controls=5 (3 lines + 2 borders), nav=4
+    // Params gets all remaining space
+    let fixed_height = 5 + 5 + 4; // status + controls + nav
+    let params_height = area.height.saturating_sub(fixed_height).max(4);
 
     let sections = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(5),              // Status - fixed
-            Constraint::Length(params_height),  // Parameters - proportional
-            Constraint::Length(controls_height), // Controls - proportional
+            Constraint::Length(params_height),  // Parameters - gets remaining space
+            Constraint::Length(5),              // Controls - fixed (3 lines + 2 borders)
+            Constraint::Length(4),              // Nav - fixed
         ])
         .split(area);
 
     render_status_box(frame, sections[0], app);
     render_params_box(frame, sections[1], app);
     render_controls_box(frame, sections[2], app);
+    render_nav_box(frame, sections[3], app);
 }
 
 fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
@@ -257,17 +258,6 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled("1-0", key_style),
             Span::styled(" seeds", desc_style),
         ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("Tab", key_style),
-            Span::styled(" Parameters", desc_style),
-        ]),
-        
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("Esc", key_style),
-            Span::styled(" Controls", desc_style),
-        ]),
     ];
 
     let is_focused = app.focus == Focus::Controls;
@@ -288,6 +278,33 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
     let paragraph = Paragraph::new(content)
         .block(block)
         .scroll((app.controls_scroll, 0));
+    frame.render_widget(paragraph, area);
+}
+
+fn render_nav_box(frame: &mut Frame, area: Rect, _app: &App) {
+    let key_style = Style::default().fg(HIGHLIGHT_COLOR);
+    let desc_style = Style::default().fg(DIM_TEXT_COLOR);
+
+    let content = vec![
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Tab", key_style),
+            Span::styled(" Parameters", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Esc", key_style),
+            Span::styled(" Controls", desc_style),
+        ]),
+    ];
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(BORDER_COLOR))
+        .title(" Focus ");
+
+    let paragraph = Paragraph::new(content).block(block);
     frame.render_widget(paragraph, area);
 }
 
