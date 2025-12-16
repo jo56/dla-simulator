@@ -30,7 +30,11 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 ### From GitHub (recommended)
 
 ```bash
+# Install the latest version
 cargo install --git https://github.com/jo56/dla-simulation
+
+# Install a specific release
+cargo install --git https://github.com/jo56/dla-simulation --tag v0.0.1
 ```
 
 After installation, run directly:
