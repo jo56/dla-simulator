@@ -744,10 +744,10 @@ impl DlaSimulation {
     }
 
     /// Get the maximum sensible particle count for this grid size
-    /// DLA patterns are sparse fractals, so ~20% of grid area is a reasonable max
+    /// Allows up to 75% of grid area for dense patterns
     pub fn max_particles(&self) -> usize {
         let grid_area = self.grid_width * self.grid_height;
-        (grid_area / 5).max(100) // 20% of grid, minimum 100
+        (grid_area * 3 / 4).max(100) // 75% of grid, minimum 100
     }
 
     /// Adjust num_particles (clamped to 100 and grid-based max)
