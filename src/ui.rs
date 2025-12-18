@@ -238,15 +238,10 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
         ))
     };
 
-    // Parameters grouped by type
+    // Parameters grouped by type, alphabetical within each group
     let content = vec![
-        // === Movement ===
+        // === Movement (alphabetical: direction, force, radial, walk) ===
         make_header("Movement"),
-        make_line(
-            "walk",
-            format!("{:.1}", settings.walk_step_size),
-            app.focus == Focus::WalkStep,
-        ),
         make_line(
             "direction",
             format!("{:.0}°", settings.walk_bias_angle),
@@ -262,22 +257,17 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             format!("{:.2}", settings.radial_bias),
             app.focus == Focus::RadialBias,
         ),
-        // === Sticking ===
+        make_line(
+            "walk",
+            format!("{:.1}", settings.walk_step_size),
+            app.focus == Focus::WalkStep,
+        ),
+        // === Sticking (alphabetical: contacts, gradient, neighbors, sidestick, sticky, tipstick) ===
         make_header("Sticking"),
         make_line(
-            "sticky",
-            format!("{:.2}", app.simulation.stickiness),
-            app.focus == Focus::Stickiness,
-        ),
-        make_line(
-            "tipstick",
-            format!("{:.1}", settings.tip_stickiness),
-            app.focus == Focus::TipSticky,
-        ),
-        make_line(
-            "sidestick",
-            format!("{:.1}", settings.side_stickiness),
-            app.focus == Focus::SideSticky,
+            "contacts",
+            format!("{}", settings.multi_contact_min),
+            app.focus == Focus::MultiContact,
         ),
         make_line(
             "gradient",
@@ -290,26 +280,26 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Neighborhood,
         ),
         make_line(
-            "contacts",
-            format!("{}", settings.multi_contact_min),
-            app.focus == Focus::MultiContact,
+            "sidestick",
+            format!("{:.1}", settings.side_stickiness),
+            app.focus == Focus::SideSticky,
         ),
-        // === Spawn ===
-        make_header("Spawn"),
         make_line(
-            "spawn",
-            settings.spawn_mode.name().to_lowercase(),
-            app.focus == Focus::Spawn,
+            "sticky",
+            format!("{:.2}", app.simulation.stickiness),
+            app.focus == Focus::Stickiness,
         ),
+        make_line(
+            "tipstick",
+            format!("{:.1}", settings.tip_stickiness),
+            app.focus == Focus::TipSticky,
+        ),
+        // === Spawn (alphabetical: bound, escape, maxsteps, minradius, spawn, spawnoff) ===
+        make_header("Spawn"),
         make_line(
             "bound",
             settings.boundary_behavior.name().to_lowercase(),
             app.focus == Focus::Boundary,
-        ),
-        make_line(
-            "spawnoff",
-            format!("{:.0}", settings.spawn_radius_offset),
-            app.focus == Focus::SpawnOffset,
         ),
         make_line(
             "escape",
@@ -317,21 +307,31 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::EscapeMult,
         ),
         make_line(
+            "maxsteps",
+            format!("{}", settings.max_walk_iterations),
+            app.focus == Focus::MaxIterations,
+        ),
+        make_line(
             "minradius",
             format!("{:.0}", settings.min_spawn_radius),
             app.focus == Focus::MinRadius,
         ),
         make_line(
-            "maxsteps",
-            format!("{}", settings.max_walk_iterations),
-            app.focus == Focus::MaxIterations,
+            "spawn",
+            settings.spawn_mode.name().to_lowercase(),
+            app.focus == Focus::Spawn,
         ),
-        // === Visual ===
+        make_line(
+            "spawnoff",
+            format!("{:.0}", settings.spawn_radius_offset),
+            app.focus == Focus::SpawnOffset,
+        ),
+        // === Visual (alphabetical: age, color, highlight, invert, mode, particles, seed, speed) ===
         make_header("Visual"),
         make_line(
-            "mode",
-            settings.color_mode.name().to_lowercase(),
-            app.focus == Focus::Mode,
+            "age",
+            if app.color_by_age { "on" } else { "off" }.to_string(),
+            app.focus == Focus::Age,
         ),
         make_line(
             "color",
@@ -339,9 +339,9 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::ColorScheme,
         ),
         make_line(
-            "age",
-            if app.color_by_age { "on" } else { "off" }.to_string(),
-            app.focus == Focus::Age,
+            "highlight",
+            format!("{}", settings.highlight_recent),
+            app.focus == Focus::Highlight,
         ),
         make_line(
             "invert",
@@ -349,9 +349,9 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Invert,
         ),
         make_line(
-            "highlight",
-            format!("{}", settings.highlight_recent),
-            app.focus == Focus::Highlight,
+            "mode",
+            settings.color_mode.name().to_lowercase(),
+            app.focus == Focus::Mode,
         ),
         make_line(
             "particles",

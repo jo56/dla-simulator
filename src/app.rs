@@ -88,114 +88,114 @@ pub enum Focus {
 }
 
 impl Focus {
-    /// Navigate to next parameter in grouped order (Movement → Sticking → Spawn → Visual)
+    /// Navigate to next parameter (grouped, alphabetical within groups)
     pub fn next(&self) -> Focus {
         match self {
-            Focus::None | Focus::Controls => Focus::WalkStep,
-            // Movement
-            Focus::WalkStep => Focus::Direction,
+            Focus::None | Focus::Controls => Focus::Direction,
+            // Movement (direction, force, radial, walk)
             Focus::Direction => Focus::Force,
             Focus::Force => Focus::RadialBias,
-            // Sticking
-            Focus::RadialBias => Focus::Stickiness,
-            Focus::Stickiness => Focus::TipSticky,
-            Focus::TipSticky => Focus::SideSticky,
-            Focus::SideSticky => Focus::StickyGradient,
+            Focus::RadialBias => Focus::WalkStep,
+            // Sticking (contacts, gradient, neighbors, sidestick, sticky, tipstick)
+            Focus::WalkStep => Focus::MultiContact,
+            Focus::MultiContact => Focus::StickyGradient,
             Focus::StickyGradient => Focus::Neighborhood,
-            Focus::Neighborhood => Focus::MultiContact,
-            // Spawn
-            Focus::MultiContact => Focus::Spawn,
-            Focus::Spawn => Focus::Boundary,
-            Focus::Boundary => Focus::SpawnOffset,
-            Focus::SpawnOffset => Focus::EscapeMult,
-            Focus::EscapeMult => Focus::MinRadius,
-            Focus::MinRadius => Focus::MaxIterations,
-            // Visual
-            Focus::MaxIterations => Focus::Mode,
-            Focus::Mode => Focus::ColorScheme,
-            Focus::ColorScheme => Focus::Age,
-            Focus::Age => Focus::Invert,
-            Focus::Invert => Focus::Highlight,
-            Focus::Highlight => Focus::Particles,
+            Focus::Neighborhood => Focus::SideSticky,
+            Focus::SideSticky => Focus::Stickiness,
+            Focus::Stickiness => Focus::TipSticky,
+            // Spawn (bound, escape, maxsteps, minradius, spawn, spawnoff)
+            Focus::TipSticky => Focus::Boundary,
+            Focus::Boundary => Focus::EscapeMult,
+            Focus::EscapeMult => Focus::MaxIterations,
+            Focus::MaxIterations => Focus::MinRadius,
+            Focus::MinRadius => Focus::Spawn,
+            Focus::Spawn => Focus::SpawnOffset,
+            // Visual (age, color, highlight, invert, mode, particles, seed, speed)
+            Focus::SpawnOffset => Focus::Age,
+            Focus::Age => Focus::ColorScheme,
+            Focus::ColorScheme => Focus::Highlight,
+            Focus::Highlight => Focus::Invert,
+            Focus::Invert => Focus::Mode,
+            Focus::Mode => Focus::Particles,
             Focus::Particles => Focus::Seed,
             Focus::Seed => Focus::Speed,
             Focus::Speed => Focus::Speed, // Stop at boundary
         }
     }
 
-    /// Navigate to previous parameter in grouped order
+    /// Navigate to previous parameter (grouped, alphabetical within groups)
     pub fn prev(&self) -> Focus {
         match self {
             Focus::None | Focus::Controls => Focus::Speed,
-            // Movement
-            Focus::WalkStep => Focus::WalkStep, // Stop at boundary
-            Focus::Direction => Focus::WalkStep,
+            // Movement (direction, force, radial, walk)
+            Focus::Direction => Focus::Direction, // Stop at boundary
             Focus::Force => Focus::Direction,
             Focus::RadialBias => Focus::Force,
-            // Sticking
-            Focus::Stickiness => Focus::RadialBias,
-            Focus::TipSticky => Focus::Stickiness,
-            Focus::SideSticky => Focus::TipSticky,
-            Focus::StickyGradient => Focus::SideSticky,
+            Focus::WalkStep => Focus::RadialBias,
+            // Sticking (contacts, gradient, neighbors, sidestick, sticky, tipstick)
+            Focus::MultiContact => Focus::WalkStep,
+            Focus::StickyGradient => Focus::MultiContact,
             Focus::Neighborhood => Focus::StickyGradient,
-            Focus::MultiContact => Focus::Neighborhood,
-            // Spawn
-            Focus::Spawn => Focus::MultiContact,
-            Focus::Boundary => Focus::Spawn,
-            Focus::SpawnOffset => Focus::Boundary,
-            Focus::EscapeMult => Focus::SpawnOffset,
-            Focus::MinRadius => Focus::EscapeMult,
-            Focus::MaxIterations => Focus::MinRadius,
-            // Visual
-            Focus::Mode => Focus::MaxIterations,
-            Focus::ColorScheme => Focus::Mode,
-            Focus::Age => Focus::ColorScheme,
-            Focus::Invert => Focus::Age,
-            Focus::Highlight => Focus::Invert,
-            Focus::Particles => Focus::Highlight,
+            Focus::SideSticky => Focus::Neighborhood,
+            Focus::Stickiness => Focus::SideSticky,
+            Focus::TipSticky => Focus::Stickiness,
+            // Spawn (bound, escape, maxsteps, minradius, spawn, spawnoff)
+            Focus::Boundary => Focus::TipSticky,
+            Focus::EscapeMult => Focus::Boundary,
+            Focus::MaxIterations => Focus::EscapeMult,
+            Focus::MinRadius => Focus::MaxIterations,
+            Focus::Spawn => Focus::MinRadius,
+            Focus::SpawnOffset => Focus::Spawn,
+            // Visual (age, color, highlight, invert, mode, particles, seed, speed)
+            Focus::Age => Focus::SpawnOffset,
+            Focus::ColorScheme => Focus::Age,
+            Focus::Highlight => Focus::ColorScheme,
+            Focus::Invert => Focus::Highlight,
+            Focus::Mode => Focus::Invert,
+            Focus::Particles => Focus::Mode,
             Focus::Seed => Focus::Particles,
             Focus::Speed => Focus::Seed,
         }
     }
 
-    /// Get the line index in the parameters box for this focus (grouped by type)
+    /// Get the line index in the parameters box for this focus (grouped, alphabetical within)
     pub fn line_index(&self) -> u16 {
         // Line indices account for section headers:
-        // 0: -- Movement --
-        // 1-4: walk, direction, force, radial
-        // 5: -- Sticking --
-        // 6-11: sticky, tipstick, sidestick, gradient, neighbors, contacts
-        // 12: -- Spawn --
-        // 13-18: spawn, bound, spawnoff, escape, minradius, maxsteps
-        // 19: -- Visual --
-        // 20-27: mode, color, age, invert, highlight, particles, seed, speed
+        // 0: -- movement --
+        // 1-4: direction, force, radial, walk
+        // 5: -- sticking --
+        // 6-11: contacts, gradient, neighbors, sidestick, sticky, tipstick
+        // 12: -- spawn --
+        // 13-18: bound, escape, maxsteps, minradius, spawn, spawnoff
+        // 19: -- visual --
+        // 20-27: age, color, highlight, invert, mode, particles, seed, speed
         match self {
             Focus::None | Focus::Controls => 0,
             // Movement (after header at line 0)
-            Focus::WalkStep => 1,
-            Focus::Direction => 2,
-            Focus::Force => 3,
-            Focus::RadialBias => 4,
+            Focus::Direction => 1,
+            Focus::Force => 2,
+            Focus::RadialBias => 3,
+            Focus::WalkStep => 4,
             // Sticking (after header at line 5)
-            Focus::Stickiness => 6,
-            Focus::TipSticky => 7,
-            Focus::SideSticky => 8,
-            Focus::StickyGradient => 9,
-            Focus::Neighborhood => 10,
-            Focus::MultiContact => 11,
+            Focus::MultiContact => 6,
+            Focus::StickyGradient => 7,
+            Focus::Neighborhood => 8,
+            Focus::SideSticky => 9,
+            Focus::Stickiness => 10,
+            Focus::TipSticky => 11,
             // Spawn (after header at line 12)
-            Focus::Spawn => 13,
-            Focus::Boundary => 14,
-            Focus::SpawnOffset => 15,
-            Focus::EscapeMult => 16,
-            Focus::MinRadius => 17,
-            Focus::MaxIterations => 18,
+            Focus::Boundary => 13,
+            Focus::EscapeMult => 14,
+            Focus::MaxIterations => 15,
+            Focus::MinRadius => 16,
+            Focus::Spawn => 17,
+            Focus::SpawnOffset => 18,
             // Visual (after header at line 19)
-            Focus::Mode => 20,
+            Focus::Age => 20,
             Focus::ColorScheme => 21,
-            Focus::Age => 22,
+            Focus::Highlight => 22,
             Focus::Invert => 23,
-            Focus::Highlight => 24,
+            Focus::Mode => 24,
             Focus::Particles => 25,
             Focus::Seed => 26,
             Focus::Speed => 27,
