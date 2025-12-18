@@ -91,32 +91,32 @@ pub enum Focus {
 }
 
 impl Focus {
-    /// Navigate to next parameter (grouped, alphabetical within groups)
+    /// Navigate to next parameter (grouped, matches UI order)
     pub fn next(&self) -> Focus {
         match self {
-            Focus::None | Focus::Controls => Focus::AdaptiveFactor,
-            // Movement (adaptive, direction, force, lattice, radial, walk)
-            Focus::AdaptiveFactor => Focus::AdaptiveStep,
-            Focus::AdaptiveStep => Focus::Direction,
+            Focus::None | Focus::Controls => Focus::AdaptiveStep,
+            // Movement: adaptive, adapt factor, direction, force, lattice, radial, walk
+            Focus::AdaptiveStep => Focus::AdaptiveFactor,
+            Focus::AdaptiveFactor => Focus::Direction,
             Focus::Direction => Focus::Force,
             Focus::Force => Focus::LatticeWalk,
             Focus::LatticeWalk => Focus::RadialBias,
             Focus::RadialBias => Focus::WalkStep,
-            // Sticking (contacts, gradient, neighbors, sidestick, sticky, tipstick)
+            // Sticking: contacts, gradient, neighbors, sticky, side stick, tip stick
             Focus::WalkStep => Focus::MultiContact,
             Focus::MultiContact => Focus::StickyGradient,
             Focus::StickyGradient => Focus::Neighborhood,
-            Focus::Neighborhood => Focus::SideSticky,
-            Focus::SideSticky => Focus::Stickiness,
-            Focus::Stickiness => Focus::TipSticky,
-            // Spawn (bound, escape, maxsteps, minradius, spawn, spawnoff)
+            Focus::Neighborhood => Focus::Stickiness,
+            Focus::Stickiness => Focus::SideSticky,
+            Focus::SideSticky => Focus::TipSticky,
+            // Spawn: bound, escape, max steps, min radius, spawn, spawn off
             Focus::TipSticky => Focus::Boundary,
             Focus::Boundary => Focus::EscapeMult,
             Focus::EscapeMult => Focus::MaxIterations,
             Focus::MaxIterations => Focus::MinRadius,
             Focus::MinRadius => Focus::Spawn,
             Focus::Spawn => Focus::SpawnOffset,
-            // Visual (age, color, highlight, invert, mode, particles, seed, speed)
+            // Visual: age, color, highlight, invert, mode, particles, seed, speed
             Focus::SpawnOffset => Focus::Age,
             Focus::Age => Focus::ColorScheme,
             Focus::ColorScheme => Focus::Highlight,
@@ -129,33 +129,34 @@ impl Focus {
         }
     }
 
-    /// Navigate to previous parameter (grouped, alphabetical within groups)
+    /// Navigate to previous parameter (grouped, matches UI order)
     pub fn prev(&self) -> Focus {
         match self {
             Focus::None | Focus::Controls => Focus::Speed,
-            // Movement (adaptive, direction, force, lattice, radial, walk)
-            Focus::AdaptiveFactor => Focus::AdaptiveFactor, // Stop at boundary
-            Focus::AdaptiveStep => Focus::AdaptiveFactor,
             Focus::Direction => Focus::AdaptiveStep,
+            // Movement: adaptive, adapt factor, direction, force, lattice, radial, walk
+            Focus::AdaptiveStep => Focus::AdaptiveStep, // Stop at boundary
+            Focus::AdaptiveFactor => Focus::AdaptiveStep,
+            Focus::Direction => Focus::AdaptiveFactor,
             Focus::Force => Focus::Direction,
             Focus::LatticeWalk => Focus::Force,
             Focus::RadialBias => Focus::LatticeWalk,
             Focus::WalkStep => Focus::RadialBias,
-            // Sticking (contacts, gradient, neighbors, sidestick, sticky, tipstick)
+            // Sticking: contacts, gradient, neighbors, sticky, side stick, tip stick
             Focus::MultiContact => Focus::WalkStep,
             Focus::StickyGradient => Focus::MultiContact,
             Focus::Neighborhood => Focus::StickyGradient,
-            Focus::SideSticky => Focus::Neighborhood,
-            Focus::Stickiness => Focus::SideSticky,
-            Focus::TipSticky => Focus::Stickiness,
-            // Spawn (bound, escape, maxsteps, minradius, spawn, spawnoff)
+            Focus::Stickiness => Focus::Neighborhood,
+            Focus::SideSticky => Focus::Stickiness,
+            Focus::TipSticky => Focus::SideSticky,
+            // Spawn: bound, escape, max steps, min radius, spawn, spawn off
             Focus::Boundary => Focus::TipSticky,
             Focus::EscapeMult => Focus::Boundary,
             Focus::MaxIterations => Focus::EscapeMult,
             Focus::MinRadius => Focus::MaxIterations,
             Focus::Spawn => Focus::MinRadius,
             Focus::SpawnOffset => Focus::Spawn,
-            // Visual (age, color, highlight, invert, mode, particles, seed, speed)
+            // Visual: age, color, highlight, invert, mode, particles, seed, speed
             Focus::Age => Focus::SpawnOffset,
             Focus::ColorScheme => Focus::Age,
             Focus::Highlight => Focus::ColorScheme,
@@ -167,22 +168,22 @@ impl Focus {
         }
     }
 
-    /// Get the line index in the parameters box for this focus (grouped, alphabetical within)
+    /// Get the line index in the parameters box for this focus (matches UI order)
     pub fn line_index(&self) -> u16 {
         // Line indices account for section headers:
         // 0: -- movement --
-        // 1-7: adaptive_factor, adaptive_step, direction, force, lattice, radial, walk
+        // 1-7: adaptive, adapt factor, direction, force, lattice, radial, walk
         // 8: -- sticking --
-        // 9-14: contacts, gradient, neighbors, sidestick, sticky, tipstick
+        // 9-14: contacts, gradient, neighbors, sticky, side stick, tip stick
         // 15: -- spawn --
-        // 16-21: bound, escape, maxsteps, minradius, spawn, spawnoff
+        // 16-21: bound, escape, max steps, min radius, spawn, spawn off
         // 22: -- visual --
         // 23-30: age, color, highlight, invert, mode, particles, seed, speed
         match self {
             Focus::None | Focus::Controls => 0,
             // Movement (after header at line 0)
-            Focus::AdaptiveFactor => 1,
-            Focus::AdaptiveStep => 2,
+            Focus::AdaptiveStep => 1,
+            Focus::AdaptiveFactor => 2,
             Focus::Direction => 3,
             Focus::Force => 4,
             Focus::LatticeWalk => 5,
@@ -192,8 +193,8 @@ impl Focus {
             Focus::MultiContact => 9,
             Focus::StickyGradient => 10,
             Focus::Neighborhood => 11,
-            Focus::SideSticky => 12,
-            Focus::Stickiness => 13,
+            Focus::Stickiness => 12,
+            Focus::SideSticky => 13,
             Focus::TipSticky => 14,
             // Spawn (after header at line 15)
             Focus::Boundary => 16,
