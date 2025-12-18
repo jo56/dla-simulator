@@ -136,10 +136,14 @@ impl DlaSimulation {
         let min_spawn_radius = self.settings.min_spawn_radius;
         let escape_mult = self.settings.escape_multiplier;
         let max_iterations = self.settings.max_walk_iterations;
-        let walk_step = self.settings.walk_step_size;
+        let base_walk_step = self.settings.walk_step_size;
+        let adaptive_step = self.settings.adaptive_step;
+        let adaptive_factor = self.settings.adaptive_step_factor;
+        let lattice_walk = self.settings.lattice_walk;
 
-        // Spawn radius - outside the structure
-        let spawn_radius = (self.max_radius + spawn_radius_offset).max(min_spawn_radius);
+        // Spawn radius - outside the structure with proportional buffer
+        // Uses 20% extra beyond max_radius plus fixed offset for better scaling
+        let spawn_radius = (self.max_radius * 1.2 + spawn_radius_offset).max(min_spawn_radius);
 
         // Pre-calculate squared escape distance (avoids sqrt in hot loop)
         let escape_dist_sq = spawn_radius * spawn_radius * escape_mult * escape_mult;
@@ -218,9 +222,33 @@ impl DlaSimulation {
             last_dx = x - center_x;
             last_dy = y - center_y;
 
-            // Calculate walk angle with bias
-            let base_angle = self.rng.gen_range(0.0..std::f32::consts::TAU);
-            let walk_angle = self.apply_walk_bias(base_angle, x, y, center_x, center_y);
+            // Calculate adaptive step size based on distance from cluster
+            let walk_step = if adaptive_step {
+                let dist = dist_sq.sqrt();
+                let safe_dist = (dist - self.max_radius - 2.0).max(0.0);
+                // Use large steps when far, small steps when close
+                // Minimum step is base step, maximum is base * factor
+                let adaptive = base_walk_step
+                    + (safe_dist / 10.0).min(adaptive_factor - 1.0) * base_walk_step;
+                adaptive.min(base_walk_step * adaptive_factor)
+            } else {
+                base_walk_step
+            };
+
+            // Calculate walk angle - either lattice (4 directions) or continuous
+            let walk_angle = if lattice_walk {
+                // Pure lattice: 4 cardinal directions only (classic Witten-Sander DLA)
+                match self.rng.gen_range(0..4) {
+                    0 => 0.0,                                    // Right
+                    1 => std::f32::consts::FRAC_PI_2,            // Up
+                    2 => std::f32::consts::PI,                   // Left
+                    _ => 3.0 * std::f32::consts::FRAC_PI_2,      // Down
+                }
+            } else {
+                // Continuous random angle with optional bias
+                let base_angle = self.rng.gen_range(0.0..std::f32::consts::TAU);
+                self.apply_walk_bias(base_angle, x, y, center_x, center_y)
+            };
 
             // Take walk step
             x += walk_step * walk_angle.cos();
@@ -766,4 +794,101 @@ impl DlaSimulation {
     pub fn adjust_stickiness(&mut self, delta: f32) {
         self.stickiness = (self.stickiness + delta).clamp(0.1, 1.0);
     }
+
+    /// Calculate fractal dimension using box-counting method
+    /// Returns (dimension, r_squared) where r_squared indicates fit quality
+    pub fn calculate_fractal_dimension(&self) -> (f32, f32) {
+        if self.particles_stuck < 50 {
+            return (0.0, 0.0); // Not enough data
+        }
+
+        let (cx, cy) = self.center();
+        let cx = cx as usize;
+        let cy = cy as usize;
+
+        // Box sizes to sample (powers of 2)
+        let box_sizes: Vec<usize> = vec![2, 4, 8, 16, 32, 64]
+            .into_iter()
+            .filter(|&s| s < self.grid_width.min(self.grid_height) / 2)
+            .collect();
+
+        if box_sizes.len() < 3 {
+            return (0.0, 0.0);
+        }
+
+        let mut log_n: Vec<f32> = Vec::new();
+        let mut log_r: Vec<f32> = Vec::new();
+
+        for box_size in &box_sizes {
+            let mut count = 0;
+            let half = self.max_radius as usize + *box_size;
+
+            let x_start = cx.saturating_sub(half);
+            let x_end = (cx + half).min(self.grid_width);
+            let y_start = cy.saturating_sub(half);
+            let y_end = (cy + half).min(self.grid_height);
+
+            for by in (y_start..y_end).step_by(*box_size) {
+                for bx in (x_start..x_end).step_by(*box_size) {
+                    // Check if any particle in this box
+                    'box_check: for dy in 0..*box_size {
+                        for dx in 0..*box_size {
+                            let x = bx + dx;
+                            let y = by + dy;
+                            if x < self.grid_width && y < self.grid_height {
+                                if self.grid[y * self.grid_width + x].is_some() {
+                                    count += 1;
+                                    break 'box_check;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if count > 0 {
+                log_n.push((count as f32).ln());
+                log_r.push((1.0 / *box_size as f32).ln());
+            }
+        }
+
+        // Linear regression to find slope (fractal dimension)
+        if log_n.len() < 3 {
+            return (0.0, 0.0);
+        }
+
+        let n = log_n.len() as f32;
+        let sum_x: f32 = log_r.iter().sum();
+        let sum_y: f32 = log_n.iter().sum();
+        let sum_xy: f32 = log_r.iter().zip(log_n.iter()).map(|(x, y)| x * y).sum();
+        let sum_x2: f32 = log_r.iter().map(|x| x * x).sum();
+
+        let denom = n * sum_x2 - sum_x * sum_x;
+        if denom.abs() < 1e-10 {
+            return (0.0, 0.0);
+        }
+
+        let slope = (n * sum_xy - sum_x * sum_y) / denom;
+
+        // Calculate R-squared
+        let mean_y = sum_y / n;
+        let ss_tot: f32 = log_n.iter().map(|y| (y - mean_y).powi(2)).sum();
+        if ss_tot.abs() < 1e-10 {
+            return (slope.abs(), 1.0);
+        }
+
+        let intercept = (sum_y - slope * sum_x) / n;
+        let ss_res: f32 = log_r
+            .iter()
+            .zip(log_n.iter())
+            .map(|(x, y)| {
+                let predicted = slope * x + intercept;
+                (y - predicted).powi(2)
+            })
+            .sum();
+        let r_squared = (1.0 - ss_res / ss_tot).max(0.0);
+
+        (slope.abs(), r_squared)
+    }
+
 }

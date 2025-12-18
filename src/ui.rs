@@ -195,10 +195,19 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
         ("RUNNING".to_string(), BORDER_COLOR)
     };
 
+    // Calculate fractal dimension (only when enough particles)
+    let (fractal_dim, r_squared) = app.simulation.calculate_fractal_dimension();
+    let dim_text = if fractal_dim > 0.0 {
+        format!("D_f: {:.2} (R²={:.2})", fractal_dim, r_squared)
+    } else {
+        "D_f: --".to_string()
+    };
+
     let content = vec![
+        Line::from(Span::styled(dim_text, Style::default().fg(TEXT_COLOR))),
         Line::from(vec![
             Span::styled(
-                format!("{} / {}", app.simulation.particles_stuck, app.simulation.num_particles),
+                format!("N: {} / {}", app.simulation.particles_stuck, app.simulation.num_particles),
                 Style::default().fg(TEXT_COLOR),
             ),
         ]),
@@ -217,7 +226,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
     let is_focused = app.focus.is_param();
     let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
     let title = if is_focused {
-        " Params (j/k adjust)"
+        " Params (w/s/j/k) "
     } else {
         " Params "
     };
@@ -248,9 +257,19 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
 
     // Parameters grouped by type, alphabetical within each group
     let content = vec![
-        // === Movement (alphabetical: direction, force, radial, walk) ===
+        // === Movement (alphabetical: adaptfactor, adaptive, direction, force, lattice, radial, walk) ===
         make_header("Movement"),
         make_line(
+            "adaptive",
+            if settings.adaptive_step { "on" } else { "off" }.to_string(),
+            app.focus == Focus::AdaptiveStep,
+        ),
+        make_line(
+            "adapt factor",
+            format!("{:.2}", settings.adaptive_step_factor),
+            app.focus == Focus::AdaptiveFactor,
+        ),
+        make_line(        
             "direction",
             format!("{:.0}°", settings.walk_bias_angle),
             app.focus == Focus::Direction,
@@ -259,6 +278,11 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             "force",
             format!("{:.2}", settings.walk_bias_strength),
             app.focus == Focus::Force,
+        ),
+        make_line(
+            "lattice",
+            if settings.lattice_walk { "on" } else { "off" }.to_string(),
+            app.focus == Focus::LatticeWalk,
         ),
         make_line(
             "radial",
@@ -288,17 +312,17 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Neighborhood,
         ),
         make_line(
-            "sidestick",
-            format!("{:.1}", settings.side_stickiness),
-            app.focus == Focus::SideSticky,
-        ),
-        make_line(
             "sticky",
             format!("{:.2}", app.simulation.stickiness),
             app.focus == Focus::Stickiness,
         ),
         make_line(
-            "tipstick",
+            "side stick",
+            format!("{:.1}", settings.side_stickiness),
+            app.focus == Focus::SideSticky,
+        ),
+        make_line(
+            "tip stick",
             format!("{:.1}", settings.tip_stickiness),
             app.focus == Focus::TipSticky,
         ),
@@ -315,12 +339,12 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::EscapeMult,
         ),
         make_line(
-            "maxsteps",
+            "max steps",
             format!("{}", settings.max_walk_iterations),
             app.focus == Focus::MaxIterations,
         ),
         make_line(
-            "minradius",
+            "min radius",
             format!("{:.0}", settings.min_spawn_radius),
             app.focus == Focus::MinRadius,
         ),
@@ -330,7 +354,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Spawn,
         ),
         make_line(
-            "spawnoff",
+            "spawn off",
             format!("{:.0}", settings.spawn_radius_offset),
             app.focus == Focus::SpawnOffset,
         ),
@@ -428,7 +452,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         ]),
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("↑↓", key_style),
+            Span::styled("w/s/↑↓", key_style),
             Span::styled(" navigate", desc_style),
         ]),
         Line::from(vec![
@@ -542,7 +566,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
     let is_focused = app.focus == Focus::Controls;
 
     let title = if is_focused {
-        " Controls (↑↓) "
+        " Controls (w/s/↑↓) "
     } else {
         " Controls "
     };
@@ -664,7 +688,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("R - Reset simulation", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Tab - Next parameter", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Shift+Tab - Previous parameter", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Up/Down - Scroll", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("w/s/↑↓ - Navigate/Scroll", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("j/k - Adjust focused value", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Esc - Close help / exit focus", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("V - Toggle fullscreen", Style::default().fg(TEXT_COLOR))),
@@ -692,8 +716,8 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("M - Cycle color mode", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("N - Cycle neighborhood type", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("B - Cycle boundary behavior", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("S - Cycle spawn mode", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("W/E - Walk step size +/-", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Shift+S - Spawn popup", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Shift+W/E - Walk step +/-", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("I - Invert colors", Style::default().fg(TEXT_COLOR))),
         Line::from(""),
         Line::from(Span::styled("MOVEMENT PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
