@@ -188,23 +188,28 @@ impl DlaSimulation {
 
                     // Check if we should stick
                     if self.rng.gen::<f32>() < effective_stickiness {
-                        // Calculate approach direction
-                        let direction = last_dy.atan2(last_dx);
-
-                        // Stick here with particle data
                         let idx = iy * self.grid_width + ix;
-                        self.grid[idx] = Some(ParticleData {
-                            age: self.particles_stuck,
-                            distance,
-                            direction,
-                            neighbor_count: neighbor_count as u8,
-                        });
-                        self.particles_stuck += 1;
 
-                        // Update max radius
-                        self.max_radius = self.max_radius.max(distance);
+                        // Only stick if cell is empty - if occupied, continue walking
+                        if self.grid[idx].is_none() {
+                            // Calculate approach direction
+                            let direction = last_dy.atan2(last_dx);
 
-                        return true;
+                            // Stick here with particle data
+                            self.grid[idx] = Some(ParticleData {
+                                age: self.particles_stuck,
+                                distance,
+                                direction,
+                                neighbor_count: neighbor_count as u8,
+                            });
+                            self.particles_stuck += 1;
+
+                            // Update max radius
+                            self.max_radius = self.max_radius.max(distance);
+
+                            return true;
+                        }
+                        // Cell occupied - particle continues walking (accurate DLA behavior)
                     }
                 }
             }

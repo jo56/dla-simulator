@@ -46,9 +46,9 @@ pub fn render_to_braille(
     let sim_width = simulation.grid_width;
     let sim_height = simulation.grid_height;
 
-    // Braille effective resolution
-    let braille_width = canvas_width as usize * 2;
-    let braille_height = canvas_height as usize * 4;
+    // Braille effective resolution (must match calculate_simulation_size min constraints)
+    let braille_width = (canvas_width as usize * 2).max(64);
+    let braille_height = (canvas_height as usize * 4).max(64);
 
     // Scale factors (pre-calculated once)
     let scale_x = sim_width as f32 / braille_width as f32;
