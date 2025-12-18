@@ -195,6 +195,14 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
         ("RUNNING".to_string(), BORDER_COLOR)
     };
 
+    // Calculate fractal dimension (only when enough particles)
+    let (fractal_dim, r_squared) = app.simulation.calculate_fractal_dimension();
+    let dim_text = if fractal_dim > 0.0 {
+        format!("D_f: {:.2} (R²={:.2})", fractal_dim, r_squared)
+    } else {
+        "D_f: --".to_string()
+    };
+
     let content = vec![
         Line::from(vec![
             Span::styled(
@@ -206,6 +214,7 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled("█".repeat(filled), Style::default().fg(Color::Green)),
             Span::styled("░".repeat(empty), Style::default().fg(Color::DarkGray)),
         ]),
+        Line::from(Span::styled(dim_text, Style::default().fg(DIM_TEXT_COLOR))),
         Line::from(Span::styled(status_text, Style::default().fg(status_color))),
     ];
 
@@ -248,8 +257,18 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
 
     // Parameters grouped by type, alphabetical within each group
     let content = vec![
-        // === Movement (alphabetical: direction, force, radial, walk) ===
+        // === Movement (alphabetical: adaptfactor, adaptive, direction, force, lattice, radial, walk) ===
         make_header("Movement"),
+        make_line(
+            "adaptfactor",
+            format!("{:.1}", settings.adaptive_step_factor),
+            app.focus == Focus::AdaptiveFactor,
+        ),
+        make_line(
+            "adaptive",
+            if settings.adaptive_step { "on" } else { "off" }.to_string(),
+            app.focus == Focus::AdaptiveStep,
+        ),
         make_line(
             "direction",
             format!("{:.0}°", settings.walk_bias_angle),
@@ -259,6 +278,11 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             "force",
             format!("{:.2}", settings.walk_bias_strength),
             app.focus == Focus::Force,
+        ),
+        make_line(
+            "lattice",
+            if settings.lattice_walk { "on" } else { "off" }.to_string(),
+            app.focus == Focus::LatticeWalk,
         ),
         make_line(
             "radial",

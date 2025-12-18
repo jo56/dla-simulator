@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize};
 /// Neighborhood type for sticking checks
 #[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
 pub enum NeighborhoodType {
-    /// 4 neighbors (orthogonal only) - creates angular, cross-like patterns
+    /// 4 neighbors (orthogonal only) - creates angular, cross-like patterns (classic DLA)
+    #[default]
     VonNeumann,
     /// 8 neighbors (orthogonal + diagonal) - natural fractal patterns
-    #[default]
     Moore,
     /// 24 neighbors (2-cell radius) - creates dense, blob-like growth
     Extended,
@@ -223,6 +223,12 @@ pub struct SimulationSettings {
     pub walk_bias_strength: f32,
     /// Radial bias (-0.3 to 0.3, negative = outward, positive = inward)
     pub radial_bias: f32,
+    /// Enable adaptive step size based on distance from cluster (circle-jumping)
+    pub adaptive_step: bool,
+    /// Factor controlling adaptive step scaling (1.0-10.0)
+    pub adaptive_step_factor: f32,
+    /// Use pure lattice walk (4 cardinal directions) instead of continuous angles
+    pub lattice_walk: bool,
 
     // === Sticking Parameters ===
     /// Neighborhood type for checking adjacent particles
@@ -263,10 +269,13 @@ impl Default for SimulationSettings {
     fn default() -> Self {
         Self {
             // Movement
-            walk_step_size: 2.0,
+            walk_step_size: 1.0,
             walk_bias_angle: 0.0,
             walk_bias_strength: 0.0,
             radial_bias: 0.0,
+            adaptive_step: true,
+            adaptive_step_factor: 3.0,
+            lattice_walk: false,
 
             // Sticking
             neighborhood: NeighborhoodType::default(),
@@ -356,6 +365,21 @@ impl SimulationSettings {
     /// Adjust highlight recent within bounds
     pub fn adjust_highlight_recent(&mut self, delta: i32) {
         self.highlight_recent = (self.highlight_recent as i32 + delta).clamp(0, 50) as usize;
+    }
+
+    /// Toggle adaptive step on/off
+    pub fn toggle_adaptive_step(&mut self) {
+        self.adaptive_step = !self.adaptive_step;
+    }
+
+    /// Adjust adaptive step factor within bounds
+    pub fn adjust_adaptive_step_factor(&mut self, delta: f32) {
+        self.adaptive_step_factor = (self.adaptive_step_factor + delta).clamp(1.0, 10.0);
+    }
+
+    /// Toggle lattice walk on/off
+    pub fn toggle_lattice_walk(&mut self) {
+        self.lattice_walk = !self.lattice_walk;
     }
 
     /// Calculate effective stickiness based on neighbor count and distance
