@@ -30,6 +30,10 @@ struct Args {
     #[arg(long, value_name = "FILE")]
     config: Option<String>,
 
+    /// Use classic DLA defaults (unit lattice steps, 4-neighbor, absorb boundary)
+    #[arg(long)]
+    classic: bool,
+
     // === Basic Parameters ===
     /// Number of particles to simulate (auto-capped to ~20% of grid area)
     #[arg(short = 'p', long, default_value = "5000")]
@@ -189,6 +193,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let is_explicit = |name: &str| -> bool {
         matches.value_source(name) == Some(ValueSource::CommandLine)
     };
+    let use_default_args = base_config.is_none() && !args.classic;
 
     // Setup terminal
     enable_raw_mode()?;
@@ -217,83 +222,83 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let max_particles = app.simulation.max_particles();
 
     // Basic params
-    if is_explicit("particles") || base_config.is_none() {
+    if is_explicit("particles") || use_default_args {
         app.simulation.num_particles = args.particles.clamp(100, max_particles);
     } else {
         // Cap config value to max_particles
         app.simulation.num_particles = app.simulation.num_particles.min(max_particles);
     }
-    if is_explicit("stickiness") || base_config.is_none() {
+    if is_explicit("stickiness") || use_default_args {
         app.simulation.stickiness = args.stickiness.clamp(0.1, 1.0);
     }
-    if is_explicit("speed") || base_config.is_none() {
+    if is_explicit("speed") || use_default_args {
         app.steps_per_frame = args.speed.clamp(1, 100);
     }
 
     // Movement settings
-    if is_explicit("walk_step") || base_config.is_none() {
+    if is_explicit("walk_step") || use_default_args {
         app.simulation.settings.walk_step_size = args.walk_step.clamp(0.5, 5.0);
     }
-    if is_explicit("walk_angle") || base_config.is_none() {
+    if is_explicit("walk_angle") || use_default_args {
         app.simulation.settings.walk_bias_angle = args.walk_angle.clamp(0.0, 360.0);
     }
-    if is_explicit("walk_force") || base_config.is_none() {
+    if is_explicit("walk_force") || use_default_args {
         app.simulation.settings.walk_bias_strength = args.walk_force.clamp(0.0, 0.5);
     }
-    if is_explicit("radial_bias") || base_config.is_none() {
+    if is_explicit("radial_bias") || use_default_args {
         app.simulation.settings.radial_bias = args.radial_bias.clamp(-0.3, 0.3);
     }
 
     // Sticking settings
-    if is_explicit("neighborhood") || base_config.is_none() {
+    if is_explicit("neighborhood") || use_default_args {
         app.simulation.settings.neighborhood = parse_neighborhood(&args.neighborhood);
     }
-    if is_explicit("multi_contact") || base_config.is_none() {
+    if is_explicit("multi_contact") || use_default_args {
         app.simulation.settings.multi_contact_min = args.multi_contact.clamp(1, 4);
     }
-    if is_explicit("tip_stickiness") || base_config.is_none() {
+    if is_explicit("tip_stickiness") || use_default_args {
         app.simulation.settings.tip_stickiness = args.tip_stickiness.clamp(0.1, 1.0);
     }
-    if is_explicit("side_stickiness") || base_config.is_none() {
+    if is_explicit("side_stickiness") || use_default_args {
         app.simulation.settings.side_stickiness = args.side_stickiness.clamp(0.1, 1.0);
     }
-    if is_explicit("stickiness_gradient") || base_config.is_none() {
+    if is_explicit("stickiness_gradient") || use_default_args {
         app.simulation.settings.stickiness_gradient = args.stickiness_gradient.clamp(-0.5, 0.5);
     }
 
     // Spawn/boundary settings
-    if is_explicit("spawn_mode") || base_config.is_none() {
+    if is_explicit("spawn_mode") || use_default_args {
         app.simulation.settings.spawn_mode = parse_spawn_mode(&args.spawn_mode);
     }
-    if is_explicit("boundary") || base_config.is_none() {
+    if is_explicit("boundary") || use_default_args {
         app.simulation.settings.boundary_behavior = parse_boundary(&args.boundary);
     }
-    if is_explicit("spawn_offset") || base_config.is_none() {
+    if is_explicit("spawn_offset") || use_default_args {
         app.simulation.settings.spawn_radius_offset = args.spawn_offset.clamp(5.0, 50.0);
     }
-    if is_explicit("escape_mult") || base_config.is_none() {
+    if is_explicit("escape_mult") || use_default_args {
         app.simulation.settings.escape_multiplier = args.escape_mult.clamp(2.0, 6.0);
     }
-    if is_explicit("min_radius") || base_config.is_none() {
+    if is_explicit("min_radius") || use_default_args {
         app.simulation.settings.min_spawn_radius = args.min_radius.clamp(20.0, 100.0);
     }
-    if is_explicit("max_iterations") || base_config.is_none() {
+    if is_explicit("max_iterations") || use_default_args {
         app.simulation.settings.max_walk_iterations = args.max_iterations.clamp(1000, 50000);
     }
 
     // Visual settings
-    if is_explicit("color_mode") || base_config.is_none() {
+    if is_explicit("color_mode") || use_default_args {
         app.simulation.settings.color_mode = parse_color_mode(&args.color_mode);
     }
-    if is_explicit("highlight") || base_config.is_none() {
+    if is_explicit("highlight") || use_default_args {
         app.simulation.settings.highlight_recent = args.highlight.clamp(0, 50);
     }
-    if is_explicit("invert") || base_config.is_none() {
+    if is_explicit("invert") || use_default_args {
         app.simulation.settings.invert_colors = args.invert;
     }
 
     // Determine seed pattern - CLI overrides config
-    let seed_pattern = if is_explicit("seed") || base_config.is_none() {
+    let seed_pattern = if is_explicit("seed") || use_default_args {
         match args.seed.to_lowercase().as_str() {
             "line" => SeedPattern::Line,
             "cross" => SeedPattern::Cross,
